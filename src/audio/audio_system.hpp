@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <atomic>
 #include <filesystem>
 #include <map>
 #include <memory>
@@ -23,6 +24,14 @@ struct AudioMixSettings {
     int master_volume = 80;
     bool music_enabled = true;
     int music_volume = 60;
+};
+
+/** @brief Lock-free front-panel snapshot of the currently sounding AY registers. */
+struct AyTelemetrySnapshot {
+    std::array<std::uint8_t, 6> channel_levels{};
+    std::uint8_t chip_count = 0;
+    bool noise_active = false;
+    bool envelope_active = false;
 };
 
 /**
@@ -88,6 +97,14 @@ public:
      */
     void set_mix_settings(const AudioMixSettings& settings);
 
+    /**
+     * @brief Returns the latest lock-free AY front-panel telemetry snapshot.
+     *
+     * The audio callback publishes programmed channel/envelope levels after synthesis;
+     * callers never lock or touch realtime decoder state.
+     */
+    [[nodiscard]] AyTelemetrySnapshot telemetry_snapshot() const noexcept;
+
 private:
     class StreamLock final {
     public:
@@ -109,6 +126,8 @@ private:
     static void render_callback(void* userdata, std::span<float> output);
     static void validate_mix_settings(const AudioMixSettings& settings);
     void render(std::span<float> output);
+    void publish_telemetry() noexcept;
+    void clear_telemetry() noexcept;
 
     AyChip music_primary_{kSampleRate};
     AyChip music_secondary_{kSampleRate};
@@ -119,6 +138,10 @@ private:
     bool music_enabled_ = true;
     bool music_paused_ = false;
     std::array<float, kChunkSamples> music_buffer_{};
+    std::array<std::atomic<std::uint8_t>, 6> meter_levels_{};
+    std::atomic<std::uint8_t> meter_chip_count_{0};
+    std::atomic<bool> meter_noise_active_{false};
+    std::atomic<bool> meter_envelope_active_{false};
     std::unique_ptr<AudioOutput> output_;
 };
 

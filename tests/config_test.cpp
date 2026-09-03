@@ -29,7 +29,7 @@ int main() {
     namespace core = w100h::core;
 
     core::AppConfig defaults;
-    assert(defaults.window.scale == 3);
+    assert(defaults.window.scale == 1);
     assert(defaults.window.vsync);
     assert(defaults.audio.enabled);
     assert(defaults.audio.master_volume == 80);

@@ -5,15 +5,60 @@ extern "C" {
 }
 
 #include <algorithm>
+#include <cstdio>
 #include <array>
 #include <cstddef>
 #include <cstdint>
 #include <stdexcept>
 
+#if defined(__unix__) || defined(__APPLE__)
+#include <fcntl.h>
+#include <unistd.h>
+#endif
+
 #include "audio/ay_chip.hpp"
 #include "audio/pt3_music.hpp"
 
 namespace w100h::audio {
+namespace {
+
+class ScopedDecoderStdoutSilencer final {
+public:
+    ScopedDecoderStdoutSilencer() noexcept {
+#if defined(__unix__) || defined(__APPLE__)
+        std::fflush(stdout);
+        saved_stdout_ = ::dup(STDOUT_FILENO);
+        null_fd_ = ::open("/dev/null", O_WRONLY);
+        if (saved_stdout_ >= 0 && null_fd_ >= 0) {
+            (void)::dup2(null_fd_, STDOUT_FILENO);
+        }
+#endif
+    }
+
+    ~ScopedDecoderStdoutSilencer() {
+#if defined(__unix__) || defined(__APPLE__)
+        std::fflush(stdout);
+        if (saved_stdout_ >= 0) {
+            (void)::dup2(saved_stdout_, STDOUT_FILENO);
+            ::close(saved_stdout_);
+        }
+        if (null_fd_ >= 0) {
+            ::close(null_fd_);
+        }
+#endif
+    }
+
+    ScopedDecoderStdoutSilencer(const ScopedDecoderStdoutSilencer&) = delete;
+    ScopedDecoderStdoutSilencer& operator=(const ScopedDecoderStdoutSilencer&) = delete;
+
+private:
+#if defined(__unix__) || defined(__APPLE__)
+    int saved_stdout_ = -1;
+    int null_fd_ = -1;
+#endif
+};
+
+}  // namespace
 
 Pt3Player::Pt3Player(int sample_rate) {
     if (sample_rate <= 0 || (sample_rate % kFrameRate) != 0) {
@@ -24,8 +69,12 @@ Pt3Player::Pt3Player(int sample_rate) {
 }
 
 void Pt3Player::start(Pt3Music& music, AyChip& primary, AyChip& secondary) {
-    const int decoder_chips =
-        func_setup_music(music.data(), static_cast<int>(music.payload_size()), 0, 0);
+    int decoder_chips = 0;
+    {
+        ScopedDecoderStdoutSilencer silence_upstream_diagnostics;
+        decoder_chips =
+            func_setup_music(music.data(), static_cast<int>(music.payload_size()), 0, 0);
+    }
     if (decoder_chips <= 0 || static_cast<std::size_t>(decoder_chips) != music.chip_count() ||
         decoder_chips > 2) {
         throw std::runtime_error{"PT3 decoder rejected the music resource"};

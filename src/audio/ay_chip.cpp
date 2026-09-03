@@ -4,6 +4,7 @@ extern "C" {
 #include <ayumi.h>
 }
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <stdexcept>
@@ -139,6 +140,34 @@ std::uint8_t AyChip::read_register(std::uint8_t register_index) const {
         throw std::out_of_range{"AY register index must be in range 0..13"};
     }
     return impl_->registers[register_index];
+}
+
+std::uint8_t AyChip::channel_visual_level(std::uint8_t channel) const {
+    if (channel >= 3) {
+        throw std::out_of_range{"AY channel index must be in range 0..2"};
+    }
+
+    const auto& state = impl_->chip.channels[channel];
+    if (!state.e_on) {
+        return static_cast<std::uint8_t>(std::clamp(state.volume, 0, 15));
+    }
+
+    const int envelope = std::clamp(impl_->chip.envelope, 0, 31);
+    return static_cast<std::uint8_t>((envelope * 15 + 15) / 31);
+}
+
+bool AyChip::channel_noise_enabled(std::uint8_t channel) const {
+    if (channel >= 3) {
+        throw std::out_of_range{"AY channel index must be in range 0..2"};
+    }
+    return impl_->chip.channels[channel].n_off == 0;
+}
+
+bool AyChip::channel_envelope_enabled(std::uint8_t channel) const {
+    if (channel >= 3) {
+        throw std::out_of_range{"AY channel index must be in range 0..2"};
+    }
+    return impl_->chip.channels[channel].e_on != 0;
 }
 
 void AyChip::render(std::span<float> interleaved_stereo) {

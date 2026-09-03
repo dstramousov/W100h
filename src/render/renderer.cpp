@@ -50,7 +50,7 @@ Renderer::Renderer(int scale, bool vsync) {
                                  std::string{SDL_GetError()}};
     }
     framebuffer_.reset(raw_framebuffer);
-    if (!SDL_SetTextureScaleMode(framebuffer_.get(), SDL_SCALEMODE_NEAREST)) {
+    if (!SDL_SetTextureScaleMode(framebuffer_.get(), SDL_SCALEMODE_LINEAR)) {
         throw std::runtime_error{"SDL_SetTextureScaleMode failed: " +
                                  std::string{SDL_GetError()}};
     }
@@ -72,6 +72,25 @@ void Renderer::set_scale(int scale) {
 
 bool Renderer::set_vsync(bool enabled) noexcept {
     return SDL_SetRenderVSync(renderer_.get(), enabled ? 1 : 0);
+}
+
+std::optional<SDL_FPoint> Renderer::window_to_logical(float x, float y) const noexcept {
+    int window_width = 0;
+    int window_height = 0;
+    if (!SDL_GetWindowSize(window_.get(), &window_width, &window_height) || window_width <= 0 ||
+        window_height <= 0) {
+        return std::nullopt;
+    }
+
+    const SDL_FRect destination = letterbox_destination(window_width, window_height);
+    if (x < destination.x || y < destination.y || x >= destination.x + destination.w ||
+        y >= destination.y + destination.h) {
+        return std::nullopt;
+    }
+
+    return SDL_FPoint{
+        (x - destination.x) * static_cast<float>(kLogicalWidth) / destination.w,
+        (y - destination.y) * static_cast<float>(kLogicalHeight) / destination.h};
 }
 
 void Renderer::begin_frame() {

@@ -39,6 +39,20 @@ int main() {
     assert(first.read_register(3) == 0);
     assert(first.read_register(7) == 0x3D);
     assert(first.read_register(9) == 10);
+    assert(first.channel_visual_level(1) == 10);
+    assert(!first.channel_noise_enabled(1));
+    assert(!first.channel_envelope_enabled(1));
+
+    first.write_register(7, 0x2D);
+    assert(first.channel_noise_enabled(1));
+    first.write_register(9, 0x10);
+    first.write_register(13, 0x0B);
+    assert(first.channel_envelope_enabled(1));
+    assert(first.channel_visual_level(1) == 15);
+
+    // Restore the fixed-volume test tone before deterministic PCM comparison.
+    first.write_register(7, 0x3D);
+    first.write_register(9, 10);
 
     std::array<float, kSamples> first_pcm{};
     std::array<float, kSamples> second_pcm{};
@@ -60,6 +74,14 @@ int main() {
         bad_register_rejected = true;
     }
     assert(bad_register_rejected);
+
+    bool bad_channel_rejected = false;
+    try {
+        (void)first.channel_visual_level(3);
+    } catch (const std::out_of_range&) {
+        bad_channel_rejected = true;
+    }
+    assert(bad_channel_rejected);
 
     first.reset();
     first_pcm.fill(1.0F);

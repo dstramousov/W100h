@@ -57,6 +57,32 @@ public:
     [[nodiscard]] std::uint8_t read_register(std::uint8_t register_index) const;
 
     /**
+     * @brief Returns a 0..15 front-panel level for one AY channel.
+     *
+     * Fixed-volume channels report their programmed 4-bit volume. Envelope-driven
+     * channels report the current Ayumi envelope position scaled to 0..15.
+     *
+     * @param channel Channel index in the inclusive range 0..2.
+     * @throws std::out_of_range If channel is greater than 2.
+     */
+    [[nodiscard]] std::uint8_t channel_visual_level(std::uint8_t channel) const;
+
+    /**
+     * @brief Returns whether noise is enabled in the mixer for one AY channel.
+     * @param channel Channel index in the inclusive range 0..2.
+     * @throws std::out_of_range If channel is greater than 2.
+     */
+    [[nodiscard]] bool channel_noise_enabled(std::uint8_t channel) const;
+
+    /**
+     * @brief Returns whether the envelope generator drives one AY channel.
+     * @param channel Channel index in the inclusive range 0..2.
+     * @throws std::out_of_range If channel is greater than 2.
+     */
+    [[nodiscard]] bool channel_envelope_enabled(std::uint8_t channel) const;
+
+
+    /**
      * @brief Renders interleaved stereo PCM into the supplied buffer.
      *
      * @param interleaved_stereo Output samples in L,R,L,R order.

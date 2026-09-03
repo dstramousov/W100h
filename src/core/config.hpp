@@ -12,7 +12,7 @@ inline constexpr const char* kDefaultConfigPath = "config/default.ini";
 
 /** @brief Window-related runtime configuration. */
 struct WindowConfig {
-    int scale = 3;
+    int scale = 1;
     bool vsync = true;
 };
 

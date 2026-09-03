@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.28)
 
 project(
     W100h
-    VERSION 0.0.4
+    VERSION 0.0.7
     DESCRIPTION "A small retro-styled AY/PT3 music player"
     LANGUAGES C CXX
 )
@@ -92,6 +92,19 @@ set_target_properties(
     w100h
     PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+)
+
+add_custom_command(
+    TARGET w100h
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:w100h>/assets/ui"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_CURRENT_SOURCE_DIR}/assets/ui/player_skin.bmp"
+            "$<TARGET_FILE_DIR:w100h>/assets/ui/player_skin.bmp"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_CURRENT_SOURCE_DIR}/assets/ui/reel_frames.bmp"
+            "$<TARGET_FILE_DIR:w100h>/assets/ui/reel_frames.bmp"
+    VERBATIM
 )
 
 include(CTest)

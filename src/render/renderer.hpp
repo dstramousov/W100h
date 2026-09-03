@@ -3,18 +3,19 @@
 #include <SDL3/SDL.h>
 
 #include <memory>
+#include <optional>
 
 namespace w100h::render {
 
-inline constexpr int kLogicalWidth = 320;
-inline constexpr int kLogicalHeight = 160;
+inline constexpr int kLogicalWidth = 960;
+inline constexpr int kLogicalHeight = 480;
 
-/** @brief Owns the pixel-native W100h SDL window, renderer, and logical framebuffer. */
+/** @brief Owns the W100h SDL window, renderer, and skin-native framebuffer. */
 class Renderer final {
 public:
     /**
-     * @brief Creates the W100h window and 320x160 nearest-neighbor framebuffer.
-     * @param scale Integer window scale relative to the logical framebuffer.
+     * @brief Creates the W100h window and 960x480 skin-native framebuffer.
+     * @param scale Integer window scale relative to the native skin resolution.
      * @param vsync Whether VSync should be enabled initially.
      * @throws std::runtime_error If SDL resource creation fails.
      */
@@ -26,12 +27,12 @@ public:
     Renderer(Renderer&&) = delete;
     Renderer& operator=(Renderer&&) = delete;
 
-    /** @brief Returns the owned SDL renderer for pixel UI drawing. */
+    /** @brief Returns the owned SDL renderer for UI drawing. */
     [[nodiscard]] SDL_Renderer* native_renderer() noexcept;
 
     /**
      * @brief Changes the integer window scale.
-     * @param scale New integer scale relative to 320x160.
+     * @param scale New integer scale relative to 960x480.
      * @throws std::runtime_error If SDL rejects the requested size.
      */
     void set_scale(int scale);
@@ -43,10 +44,18 @@ public:
      */
     [[nodiscard]] bool set_vsync(bool enabled) noexcept;
 
+    /**
+     * @brief Converts window-space mouse coordinates to logical framebuffer coordinates.
+     * @param x Window-space X coordinate.
+     * @param y Window-space Y coordinate.
+     * @return Logical point, or std::nullopt when the position lies in letterboxing.
+     */
+    [[nodiscard]] std::optional<SDL_FPoint> window_to_logical(float x, float y) const noexcept;
+
     /** @brief Selects and clears the logical framebuffer for a new frame. */
     void begin_frame();
 
-    /** @brief Presents the logical framebuffer with nearest-neighbor scaling. */
+    /** @brief Presents the skin-native framebuffer to the window. */
     void present();
 
 private:
