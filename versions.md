@@ -15,3 +15,9 @@
 - Replace bundled-track autoplay with real startup/library behavior: bare launch scans `~/Music` and stays silent, while an explicit PT3 file starts immediately and seeds a playlist from its directory.
 - Add deterministic recursive PT3 library scanning plus keyboard transport for play/pause, restart, stop, previous, and next without changing the proven PT3/AY/TurboSound synthesis path.
 - Replace the bootstrap README with the fixed Russian project overview and UI concept board for the three selected themes; document stable usage, hotkeys, and repository layout.
+
+## v0.0.3 -> v0.0.4
+
+- Accept the Vortex Tracker II 1.0 PT3 header in addition to the classic ProTracker 3.x header, including mixed-header 02TS TurboSound containers.
+- Add regression coverage for a two-chip 02TS payload whose second embedded PT3 module uses the Vortex Tracker II header.
+- Suppress repeated identical playback-error log messages for the same track while keeping the UI in LOAD ERROR state.

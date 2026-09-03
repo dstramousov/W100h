@@ -8,10 +8,10 @@
 
 namespace {
 
-std::vector<std::uint8_t> make_minimal_pt3() {
+std::vector<std::uint8_t> make_minimal_pt3(
+    std::string_view signature = "ProTracker 3.5") {
     constexpr std::size_t kSize = 204;
     std::vector<std::uint8_t> data(kSize, 0);
-    constexpr std::string_view signature = "ProTracker 3.5";
     for (std::size_t index = 0; index < signature.size(); ++index) {
         data[index] = static_cast<std::uint8_t>(signature[index]);
     }
@@ -22,6 +22,28 @@ std::vector<std::uint8_t> make_minimal_pt3() {
     data[104] = 0;
     data[201] = 0;
     data[202] = 0xff;
+    return data;
+}
+
+void append_u16_le(std::vector<std::uint8_t>& data, std::size_t value) {
+    assert(value <= 0xffffU);
+    data.push_back(static_cast<std::uint8_t>(value & 0xffU));
+    data.push_back(static_cast<std::uint8_t>((value >> 8U) & 0xffU));
+}
+
+std::vector<std::uint8_t> make_mixed_header_02ts() {
+    const auto first = make_minimal_pt3("ProTracker 3.7");
+    const auto second = make_minimal_pt3("Vortex Tracker II 1.0 module:");
+
+    std::vector<std::uint8_t> data;
+    data.reserve(first.size() + second.size() + 16U);
+    data.insert(data.end(), first.begin(), first.end());
+    data.insert(data.end(), second.begin(), second.end());
+    data.insert(data.end(), {'P', 'T', '3', '!'});
+    append_u16_le(data, first.size());
+    data.insert(data.end(), {'P', 'T', '3', '!'});
+    append_u16_le(data, second.size());
+    data.insert(data.end(), {'0', '2', 'T', 'S'});
     return data;
 }
 
@@ -48,6 +70,16 @@ int main() {
     const auto single = w100h::audio::Pt3Music::parse(single_data);
     assert(single.chip_count() == 1);
     assert(single.payload_size() == single_data.size());
+
+    const auto vortex_data = make_minimal_pt3("Vortex Tracker II 1.0 module:");
+    const auto vortex = w100h::audio::Pt3Music::parse(vortex_data);
+    assert(vortex.chip_count() == 1);
+    assert(vortex.payload_size() == vortex_data.size());
+
+    const auto mixed_02ts_data = make_mixed_header_02ts();
+    const auto mixed_02ts = w100h::audio::Pt3Music::parse(mixed_02ts_data);
+    assert(mixed_02ts.chip_count() == 2);
+    assert(mixed_02ts.payload_size() == mixed_02ts_data.size());
 
     expect_runtime_error([] { (void)w100h::audio::Pt3Music::parse({}); });
 

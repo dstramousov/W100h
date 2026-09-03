@@ -170,6 +170,8 @@ int Application::run(int argc, char* argv[]) {
     std::vector<library::MusicTrack> tracks = startup.tracks;
     std::optional<std::size_t> current_index = startup.current_index;
     PlaybackState playback_state = PlaybackState::stopped;
+    std::optional<std::filesystem::path> last_failed_track;
+    std::string last_play_error;
 
     const auto play_current = [&]() {
         if (!audio_system || !current_index.has_value() || *current_index >= tracks.size()) {
@@ -182,10 +184,19 @@ int Application::run(int argc, char* argv[]) {
                 return;
             }
             playback_state = PlaybackState::playing;
+            last_failed_track.reset();
+            last_play_error.clear();
         } catch (const std::exception& error) {
             playback_state = PlaybackState::load_error;
-            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Cannot play '%s': %s",
-                        tracks[*current_index].path.string().c_str(), error.what());
+            const auto& path = tracks[*current_index].path;
+            const std::string error_message = error.what();
+            if (!last_failed_track.has_value() || *last_failed_track != path ||
+                last_play_error != error_message) {
+                SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Cannot play '%s': %s",
+                            path.string().c_str(), error_message.c_str());
+                last_failed_track = path;
+                last_play_error = error_message;
+            }
         }
     };
 

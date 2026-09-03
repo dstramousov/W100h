@@ -32,18 +32,24 @@ constexpr std::size_t kTurboSoundFooterSize = 16;
         (static_cast<std::uint16_t>(data[offset + 1]) << 8U));
 }
 
-[[nodiscard]] bool starts_with_pt3_signature(std::span<const std::uint8_t> data) {
-    constexpr std::string_view signature = "ProTracker 3.";
-    return data.size() >= signature.size() &&
-           std::equal(signature.begin(), signature.end(), data.begin());
+[[nodiscard]] bool has_supported_pt3_signature(std::span<const std::uint8_t> data) {
+    constexpr std::array<std::string_view, 2> signatures{
+        "ProTracker 3.",
+        "Vortex Tracker II 1.0 module:",
+    };
+
+    return std::any_of(signatures.begin(), signatures.end(), [&](std::string_view signature) {
+        return data.size() >= signature.size() &&
+               std::equal(signature.begin(), signature.end(), data.begin());
+    });
 }
 
 void validate_module(std::span<const std::uint8_t> data) {
     if (data.size() < kPt3HeaderSize || data.size() > kPt3MaximumSize) {
         throw std::runtime_error{"PT3 module size is outside the supported range"};
     }
-    if (!starts_with_pt3_signature(data)) {
-        throw std::runtime_error{"PT3 module signature is missing"};
+    if (!has_supported_pt3_signature(data)) {
+        throw std::runtime_error{"PT3 module signature is unsupported"};
     }
     if (data[kPt3ModeField] != 0x20) {
         throw std::runtime_error{
