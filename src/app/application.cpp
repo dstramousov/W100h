@@ -154,7 +154,7 @@ int Application::run(int argc, char* argv[]) {
     const int startup_scale = options.scale_override.value_or(config.window.scale);
     const SdlGuard sdl_guard{config.audio.enabled};
 
-    SDL_SetAppMetadata("W100h", core::kVersion.data(), "W100h");
+    SDL_SetAppMetadata("W100h", core::kVersion.data(), "org.w100h.player");
     render::Renderer renderer{startup_scale, config.window.vsync};
     ui::PlayerView player_view{renderer.native_renderer()};
 
@@ -413,9 +413,9 @@ int Application::run(int argc, char* argv[]) {
             .duration_seconds = timeline.duration_seconds,
             .progress = timeline.progress,
             .ay_channel_levels = telemetry.channel_levels,
-            .ay_chip_count = telemetry.chip_count,
             .ay_noise_active = telemetry.noise_active,
             .ay_envelope_active = telemetry.envelope_active,
+            .ay_chip_count = telemetry.chip_count,
             .playback_state = playback_state,
         };
 

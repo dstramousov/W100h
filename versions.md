@@ -51,3 +51,15 @@
 - Add a real PT3 transport timeline by reading the pinned decoder's current/loop positions through a narrow bridge, then show current/total time plus a green dotted progress bar across the live display.
 - Reassign Left/Right to seek the active track by -10/+10 seconds, Up/Down to master volume, and Ctrl+Left/Ctrl+Right to previous/next composition while keeping the front-panel PREV/NEXT buttons as playlist controls.
 - Implement seek reconstruction with AY synthesis advancement so tracker/envelope state remains coherent after jumps, preserve first-pass duration across Stop, and keep README.md unchanged.
+
+## v0.0.9 -> v0.0.10
+
+- Add per-user Linux desktop integration for W100h with a stable `org.w100h.player` SDL/desktop application ID, a dedicated scalable cassette-player icon, and a `.desktop` entry that passes one selected PT3 file directly to the existing autoplay command-line path.
+- Register `audio/x-pt3` through shared-mime-info and make W100h the default PT3 handler so Nautilus double-click opens and immediately plays the selected module without sudo or hard-coded machine paths.
+- Add safe optional Midnight Commander integration that inserts/removes one managed `.pt3` Enter rule in the user's `mc.ext.ini`, plus a short standalone Linux integration guide while keeping the fixed README unchanged.
+
+## v0.0.10 -> v0.0.11
+
+- Rebuild cassette reel animation around a fixed pivot with 24 frames and rotate only the photographed outer engagement annulus, eliminating the visible orbital wobble while keeping the hub and cassette body static.
+- Restore a subtle rounded lower chassis edge, lift the keyboard legends away from the window boundary, and remove the clipped footer text that made the bottom of the player look cut off.
+- Split NOISE and ENVELOPE telemetry per AY chip and center compact N/E lamps under each chip's middle B channel so single-AY and TurboSound activity is displayed symmetrically and truthfully; keep README.md unchanged.

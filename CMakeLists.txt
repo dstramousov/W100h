@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.28)
 
 project(
     W100h
-    VERSION 0.0.9
+    VERSION 0.0.11
     DESCRIPTION "A small retro-styled AY/PT3 music player"
     LANGUAGES C CXX
 )

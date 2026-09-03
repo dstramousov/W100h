@@ -30,9 +30,9 @@ struct AudioMixSettings {
 /** @brief Lock-free front-panel snapshot of the currently sounding AY registers. */
 struct AyTelemetrySnapshot {
     std::array<std::uint8_t, 6> channel_levels{};
+    std::array<bool, 2> noise_active{};
+    std::array<bool, 2> envelope_active{};
     std::uint8_t chip_count = 0;
-    bool noise_active = false;
-    bool envelope_active = false;
 };
 
 /** @brief Lock-free transport position for the current PT3 first-pass timeline. */
@@ -159,9 +159,9 @@ private:
     bool music_paused_ = false;
     std::array<float, kChunkSamples> music_buffer_{};
     std::array<std::atomic<std::uint8_t>, 6> meter_levels_{};
+    std::array<std::atomic<bool>, 2> meter_noise_active_{};
+    std::array<std::atomic<bool>, 2> meter_envelope_active_{};
     std::atomic<std::uint8_t> meter_chip_count_{0};
-    std::atomic<bool> meter_noise_active_{false};
-    std::atomic<bool> meter_envelope_active_{false};
     std::atomic<std::uint32_t> timeline_current_tick_{0};
     std::atomic<std::uint32_t> timeline_duration_ticks_{0};
     std::unique_ptr<AudioOutput> output_;

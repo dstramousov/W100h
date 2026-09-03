@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+  <mime-type type="audio/x-pt3">
+    <comment>Pro Tracker 3 chiptune</comment>
+    <comment xml:lang="ru">Музыка Pro Tracker 3</comment>
+    <glob pattern="*.pt3" weight="90"/>
+    <glob pattern="*.PT3" weight="90"/>
+    <magic priority="80">
+      <match type="string" value="ProTracker 3." offset="0"/>
+      <match type="string" value="Vortex Tracker II 1.0 module:" offset="0"/>
+    </magic>
+  </mime-type>
+</mime-info>

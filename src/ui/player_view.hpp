@@ -40,9 +40,9 @@ struct PlayerViewModel {
     int duration_seconds = 0;
     float progress = 0.0F;
     std::array<std::uint8_t, 6> ay_channel_levels{};
+    std::array<bool, 2> ay_noise_active{};
+    std::array<bool, 2> ay_envelope_active{};
     std::uint8_t ay_chip_count = 0;
-    bool ay_noise_active = false;
-    bool ay_envelope_active = false;
     PlaybackVisualState playback_state = PlaybackVisualState::stopped;
 };
 

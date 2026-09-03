@@ -98,9 +98,13 @@ AyTelemetrySnapshot AudioSystem::telemetry_snapshot() const noexcept {
     for (std::size_t index = 0; index < snapshot.channel_levels.size(); ++index) {
         snapshot.channel_levels[index] = meter_levels_[index].load(std::memory_order_relaxed);
     }
+    for (std::size_t chip = 0; chip < snapshot.noise_active.size(); ++chip) {
+        snapshot.noise_active[chip] =
+            meter_noise_active_[chip].load(std::memory_order_relaxed);
+        snapshot.envelope_active[chip] =
+            meter_envelope_active_[chip].load(std::memory_order_relaxed);
+    }
     snapshot.chip_count = meter_chip_count_.load(std::memory_order_relaxed);
-    snapshot.noise_active = meter_noise_active_.load(std::memory_order_relaxed);
-    snapshot.envelope_active = meter_envelope_active_.load(std::memory_order_relaxed);
     return snapshot;
 }
 
@@ -155,18 +159,21 @@ void AudioSystem::render(std::span<float> output) {
 
 void AudioSystem::publish_telemetry() noexcept {
     const std::size_t chips = music_player_.active() ? music_player_.chip_count() : 0;
-    bool any_noise = false;
-    bool any_envelope = false;
 
     const auto publish_chip = [&](const AyChip& chip, std::size_t chip_index) {
+        bool noise_active = false;
+        bool envelope_active = false;
         for (std::uint8_t channel = 0; channel < 3; ++channel) {
             const std::size_t meter_index = chip_index * 3 + channel;
             const std::uint8_t level = chip.channel_visual_level(channel);
             meter_levels_[meter_index].store(level, std::memory_order_relaxed);
             const bool audible = level > 0;
-            any_noise = any_noise || (audible && chip.channel_noise_enabled(channel));
-            any_envelope = any_envelope || (audible && chip.channel_envelope_enabled(channel));
+            noise_active = noise_active || (audible && chip.channel_noise_enabled(channel));
+            envelope_active =
+                envelope_active || (audible && chip.channel_envelope_enabled(channel));
         }
+        meter_noise_active_[chip_index].store(noise_active, std::memory_order_relaxed);
+        meter_envelope_active_[chip_index].store(envelope_active, std::memory_order_relaxed);
     };
 
     if (chips >= 1) {
@@ -175,6 +182,8 @@ void AudioSystem::publish_telemetry() noexcept {
         for (std::size_t index = 0; index < 3; ++index) {
             meter_levels_[index].store(0, std::memory_order_relaxed);
         }
+        meter_noise_active_[0].store(false, std::memory_order_relaxed);
+        meter_envelope_active_[0].store(false, std::memory_order_relaxed);
     }
 
     if (chips >= 2) {
@@ -183,20 +192,24 @@ void AudioSystem::publish_telemetry() noexcept {
         for (std::size_t index = 3; index < 6; ++index) {
             meter_levels_[index].store(0, std::memory_order_relaxed);
         }
+        meter_noise_active_[1].store(false, std::memory_order_relaxed);
+        meter_envelope_active_[1].store(false, std::memory_order_relaxed);
     }
 
     meter_chip_count_.store(static_cast<std::uint8_t>(chips), std::memory_order_relaxed);
-    meter_noise_active_.store(any_noise, std::memory_order_relaxed);
-    meter_envelope_active_.store(any_envelope, std::memory_order_relaxed);
 }
 
 void AudioSystem::clear_telemetry() noexcept {
     for (auto& level : meter_levels_) {
         level.store(0, std::memory_order_relaxed);
     }
+    for (auto& active : meter_noise_active_) {
+        active.store(false, std::memory_order_relaxed);
+    }
+    for (auto& active : meter_envelope_active_) {
+        active.store(false, std::memory_order_relaxed);
+    }
     meter_chip_count_.store(0, std::memory_order_relaxed);
-    meter_noise_active_.store(false, std::memory_order_relaxed);
-    meter_envelope_active_.store(false, std::memory_order_relaxed);
 }
 
 void AudioSystem::publish_timeline() noexcept {

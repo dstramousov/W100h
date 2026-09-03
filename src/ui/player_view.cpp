@@ -39,7 +39,7 @@ constexpr SDL_FRect kNextButton{635.0F, 400.0F, 168.0F, 46.0F};
 constexpr SDL_FPoint kVolumeCenter{833.0F, 96.0F};
 constexpr float kVolumeRadius = 51.0F;
 constexpr float kPi = 3.14159265358979323846F;
-constexpr int kReelFrameCount = 12;
+constexpr int kReelFrameCount = 24;
 constexpr int kReelFrameSize = 104;
 
 [[nodiscard]] bool contains(const SDL_FRect& rect, float x, float y) noexcept {
@@ -208,12 +208,22 @@ void draw_meters(SDL_Renderer* renderer, const PlayerViewModel& model) {
         }
     }
 
-    draw_text(renderer, 773, 320, "N", model.ay_noise_active ? kText : kDim, 1);
-    fill_rect(renderer, SDL_FRect{785.0F, 321.0F, 8.0F, 5.0F},
-              model.ay_noise_active ? kMeterGreen : kMeterOff);
-    draw_text(renderer, 877, 320, "E", model.ay_envelope_active ? kText : kDim, 1);
-    fill_rect(renderer, SDL_FRect{889.0F, 321.0F, 8.0F, 5.0F},
-              model.ay_envelope_active ? kMeterGreen : kMeterOff);
+    constexpr std::array<float, 2> group_centers{794.0F, 876.0F};
+    for (std::size_t chip = 0; chip < group_centers.size(); ++chip) {
+        const bool chip_active = model.ay_chip_count > chip;
+        const float center = group_centers[chip];
+        const bool noise_active = chip_active && model.ay_noise_active[chip];
+        const bool envelope_active = chip_active && model.ay_envelope_active[chip];
+
+        draw_text(renderer, static_cast<int>(center - 22.0F), 320, "N",
+                  noise_active ? kText : kDim, 1);
+        fill_rect(renderer, SDL_FRect{center - 11.0F, 321.0F, 8.0F, 5.0F},
+                  noise_active ? kMeterGreen : kMeterOff);
+        draw_text(renderer, static_cast<int>(center + 4.0F), 320, "E",
+                  envelope_active ? kText : kDim, 1);
+        fill_rect(renderer, SDL_FRect{center + 15.0F, 321.0F, 8.0F, 5.0F},
+                  envelope_active ? kMeterGreen : kMeterOff);
+    }
 }
 
 void draw_progress_bar(SDL_Renderer* renderer, const PlayerViewModel& model) {
@@ -280,11 +290,10 @@ void draw_transport(SDL_Renderer* renderer, const PlayerViewModel& model) {
     draw_centered_text(renderer, play_symbol_area, 414, ">", play_color, 3);
     draw_centered_text(renderer, pause_symbol_area, 414, "II", pause_color, 3);
 
-    draw_keycap_label(renderer, SDL_FRect{115.0F, 450.0F, 112.0F, 20.0F}, "[CTRL+LEFT]");
-    draw_keycap_label(renderer, SDL_FRect{326.0F, 450.0F, 60.0F, 20.0F}, "[SPACE]");
-    draw_keycap_label(renderer, SDL_FRect{521.0F, 450.0F, 31.0F, 20.0F}, "[S]");
-    draw_keycap_label(renderer, SDL_FRect{663.0F, 450.0F, 115.0F, 20.0F}, "[CTRL+RIGHT]");
-    draw_text(renderer, 18, 469, "ESC QUIT   LEFT/RIGHT SEEK 10S   UP/DOWN VOL", kDim, 1);
+    draw_keycap_label(renderer, SDL_FRect{115.0F, 447.0F, 112.0F, 18.0F}, "[CTRL+LEFT]");
+    draw_keycap_label(renderer, SDL_FRect{326.0F, 447.0F, 60.0F, 18.0F}, "[SPACE]");
+    draw_keycap_label(renderer, SDL_FRect{521.0F, 447.0F, 31.0F, 18.0F}, "[S]");
+    draw_keycap_label(renderer, SDL_FRect{663.0F, 447.0F, 115.0F, 18.0F}, "[CTRL+RIGHT]");
 }
 
 }  // namespace

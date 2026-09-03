@@ -1,0 +1,14 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=W100h
+GenericName=PT3 Chip Music Player
+Comment=Play PT3 and 02TS TurboSound chiptunes
+Exec=@W100H_EXEC@ %f
+Path=@W100H_WORKDIR@
+Icon=org.w100h.player
+Terminal=false
+Categories=AudioVideo;Audio;Player;
+MimeType=audio/x-pt3;
+StartupNotify=true
+StartupWMClass=org.w100h.player
