@@ -67,3 +67,7 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+
+# W100h local/generated files
+config/local.ini
+W100h_v*_current.zip

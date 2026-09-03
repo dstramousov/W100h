@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PROJECT_NAME="W100h"
+VERSIONS_FILE="versions.md"
+VERSION_HEADER="src/core/version.hpp"
+
+for required_file in "${VERSIONS_FILE}" "${VERSION_HEADER}" "CMakeLists.txt"; do
+  if [[ ! -f "${required_file}" ]]; then
+    echo "ERROR: ${required_file} not found. Run this script from project root." >&2
+    exit 1
+  fi
+done
+
+version="$(
+  grep -E '^## v[0-9]+\.[0-9]+\.[0-9]+ -> v[0-9]+\.[0-9]+\.[0-9]+' "${VERSIONS_FILE}" \
+    | tail -n 1 \
+    | sed -E 's/^## v[0-9]+\.[0-9]+\.[0-9]+ -> v([0-9]+\.[0-9]+\.[0-9]+).*$/\1/'
+)"
+
+header_version="$(
+  sed -nE 's/.*kVersion[[:space:]]*=[[:space:]]*"([0-9]+\.[0-9]+\.[0-9]+)".*/\1/p' \
+    "${VERSION_HEADER}" | head -n 1
+)"
+
+cmake_version="$(
+  sed -nE 's/^[[:space:]]*VERSION[[:space:]]+([0-9]+\.[0-9]+\.[0-9]+).*/\1/p' \
+    CMakeLists.txt | head -n 1
+)"
+
+if [[ -z "${version}" ]]; then
+  echo "ERROR: could not detect latest version from ${VERSIONS_FILE}" >&2
+  exit 1
+fi
+if [[ "${header_version}" != "${version}" ]]; then
+  echo "ERROR: ${VERSION_HEADER} has version '${header_version}', expected '${version}'" >&2
+  exit 1
+fi
+if [[ "${cmake_version}" != "${version}" ]]; then
+  echo "ERROR: CMakeLists.txt has version '${cmake_version}', expected '${version}'" >&2
+  exit 1
+fi
+
+archive="../${PROJECT_NAME}_v${version}_current.zip"
+
+echo "Detected version: v${version}"
+echo "Creating archive: ${archive}"
+
+zip -r "${archive}" . \
+  -x ".git/*" \
+     "build/*" \
+     "config/local.ini" \
+     ".cache/*" \
+     "__pycache__/*" \
+     "*.pyc" \
+     "${PROJECT_NAME}_v*_current.zip"
+
+echo
+echo "Done:"
+echo "${archive}"
