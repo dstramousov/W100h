@@ -1,5 +1,6 @@
 #pragma once
 
+#include <filesystem>
 #include <optional>
 
 namespace w100h::core {
@@ -7,6 +8,7 @@ namespace w100h::core {
 /** @brief Parsed W100h command-line options. */
 struct CommandLineOptions {
     std::optional<int> scale_override;
+    std::optional<std::filesystem::path> input_path;
     bool show_help = false;
 };
 
@@ -15,7 +17,7 @@ struct CommandLineOptions {
  * @param argc Argument count from main().
  * @param argv Argument vector from main().
  * @return Parsed options.
- * @throws std::runtime_error If an option is unknown or malformed.
+ * @throws std::runtime_error If an option is unknown, malformed, or more than one path is supplied.
  */
 [[nodiscard]] CommandLineOptions parse_command_line(int argc, char* argv[]);
 

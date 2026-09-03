@@ -34,8 +34,12 @@ CommandLineOptions parse_command_line(int argc, char* argv[]) {
             options.scale_override = scale;
         } else if (argument == "--help" || argument == "-h") {
             options.show_help = true;
-        } else {
+        } else if (argument.starts_with('-')) {
             throw std::runtime_error{"unknown argument: " + std::string{argument}};
+        } else if (options.input_path.has_value()) {
+            throw std::runtime_error{"only one music file or directory may be supplied"};
+        } else {
+            options.input_path = std::filesystem::path{argument};
         }
     }
     return options;

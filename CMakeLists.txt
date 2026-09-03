@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.28)
 
 project(
     W100h
-    VERSION 0.0.2
+    VERSION 0.0.3
     DESCRIPTION "A small retro-styled AY/PT3 music player"
     LANGUAGES C CXX
 )
@@ -72,6 +72,7 @@ target_sources(
         src/audio/pt3_player.cpp
         src/core/command_line.cpp
         src/core/config.cpp
+        src/library/music_library.cpp
         src/render/renderer.cpp
         src/ui/pixel_font.cpp
         src/ui/player_view.cpp
@@ -149,6 +150,7 @@ if(BUILD_TESTING)
     add_executable(w100h_config_test
         tests/config_test.cpp
         src/core/config.cpp
+        src/library/music_library.cpp
     )
     target_compile_features(w100h_config_test PRIVATE cxx_std_23)
     target_include_directories(w100h_config_test PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
@@ -158,4 +160,30 @@ if(BUILD_TESTING)
         target_compile_options(w100h_config_test PRIVATE -Wall -Wextra -Wpedantic)
     endif()
     add_test(NAME config COMMAND w100h_config_test)
+
+    add_executable(w100h_command_line_test
+        tests/command_line_test.cpp
+        src/core/command_line.cpp
+    )
+    target_compile_features(w100h_command_line_test PRIVATE cxx_std_23)
+    target_include_directories(w100h_command_line_test PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
+    if(MSVC)
+        target_compile_options(w100h_command_line_test PRIVATE /W4)
+    else()
+        target_compile_options(w100h_command_line_test PRIVATE -Wall -Wextra -Wpedantic)
+    endif()
+    add_test(NAME command_line COMMAND w100h_command_line_test)
+
+    add_executable(w100h_music_library_test
+        tests/music_library_test.cpp
+        src/library/music_library.cpp
+    )
+    target_compile_features(w100h_music_library_test PRIVATE cxx_std_23)
+    target_include_directories(w100h_music_library_test PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
+    if(MSVC)
+        target_compile_options(w100h_music_library_test PRIVATE /W4)
+    else()
+        target_compile_options(w100h_music_library_test PRIVATE -Wall -Wextra -Wpedantic)
+    endif()
+    add_test(NAME music_library COMMAND w100h_music_library_test)
 endif()

@@ -1,62 +1,77 @@
 # W100h
 
-W100h is a small retro-styled music player built around the AY-3-8910/PT3 audio path originally developed for Mode256.
+**W100h** — маленький музыкальный плеер для старой компьютерной музыки с интерфейсом в духе ZX Spectrum и ранних домашних компьютеров. Название читается как `W100h`: `100h` — это hexadecimal `256`.
 
-Current bootstrap baseline:
+Главная идея простая: открыть музыкальный файл двойным кликом или запустить W100h как обычный плеер для своей папки `~/Music`. Никакой игровой логики Mode256 внутри не остаётся; от него используется проверенный музыкальный тракт AY/PT3.
 
-- C++23 and SDL3 3.4.10;
-- Ayumi AY-3-8910 synthesis at 48 kHz stereo;
-- PT3 playback with embedded-loop handling at a 50 Hz sequencer rate;
-- 02TS two-chip TurboSound support;
-- 320x160 pixel-native UI framebuffer with nearest-neighbor presentation;
-- no game-oriented AYFX/SFX path and no Mode256 graphics-profile laboratory.
+## Как он работает
 
-The current bootstrap build starts the bundled `Pator - August Melancholy.pt3` track. File associations, playlist/library scanning, transport controls, and selectable themes are intentionally left for later patches.
-
-## Build
-
-```bash
-./m
-```
-
-Other build commands:
-
-```bash
-./m release
-./m clean
-./m rebuild
-```
-
-CMake fetches pinned SDL3, Ayumi, and Volutar pt3player dependencies on the first configure.
-
-## Run
+При обычном запуске без параметров W100h рекурсивно сканирует `~/Music`, собирает поддерживаемые композиции в список и **не начинает играть сам**.
 
 ```bash
 ./r
 ```
 
-Temporary integer window scaling is available from the command line:
+Если передать конкретный файл, он становится текущим и запускается сразу. Именно этот режим используется для файловой ассоциации в Nautilus:
+
+```bash
+./r ~/Music/demo.pt3
+```
+
+Можно передать каталог — он будет просканирован вместо `~/Music`, но воспроизведение само не стартует:
+
+```bash
+./r ~/Music/ZX
+```
+
+Первый основной формат — **PT3**, включая поддерживаемые музыкальным ядром двухчиповые 02TS/TurboSound-модули. Другие форматы добавляются отдельно, через собственные декодеры, не ломая существующий AY/PT3 тракт.
+
+## Управление
+
+| Клавиша | Действие |
+|---|---|
+| `Space` | Play / Pause |
+| `Enter` | запустить выбранный трек сначала |
+| `←` / `→` | предыдущий / следующий трек и сразу играть |
+| `S` | Stop |
+| `Esc` | выход |
+
+Темы переключаются через Settings; отдельные горячие клавиши для них не нужны.
+
+## Внешний вид
+
+Окно остаётся одним, компактным и pixel-native: логический размер `320×160`, увеличение только целым nearest-neighbor масштабом. Выбраны три оформления: **№3 Winamp ZX — основное**, **№1 Spectrum Classic** и **№5 Tape Deck**. Диагональная спектрумовская радуга остаётся общим визуальным мотивом.
+
+![Концепты интерфейса W100h](docs/w100h_ui_concepts.png)
+
+На раннем макете ещё стоит старое рабочее имя `M256 PLAYER`; для W100h берутся сами компоновки. Рабочими направлениями считаются варианты **1, 3 и 5**; остальные — только поисковые варианты.
+
+## Где что лежит
+
+```text
+src/app/       запуск приложения и главный цикл
+src/audio/     AY-3-8910, PT3/02TS, SDL audio
+src/library/   поиск музыки и построение списка
+src/render/    окно и pixel-native framebuffer
+src/ui/        интерфейс и bitmap-шрифт
+config/        исходные настройки
+third_party/   зафиксированные внешние аудиокомпоненты
+versions.md    история изменений проекта
+```
+
+Локальная сборка и запуск:
+
+```bash
+./m
+./r
+```
+
+Временный масштаб окна можно задать так:
 
 ```bash
 ./r --scale 4
 ```
 
-Press `Esc` to quit.
+Скрипт `a` делает текущий ZIP-архив проекта, `appr` проверяет изменения, формирует сообщение из `versions.md`, затем после подтверждения выполняет commit и push.
 
-## Configuration
-
-The bootstrap configuration lives in `config/default.ini`:
-
-```ini
-[window]
-scale=3
-vsync=true
-
-[audio]
-enabled=true
-master_volume=80
-music_enabled=true
-music_volume=60
-```
-
-The music path deliberately preserves the proven Mode256 behavior. Only game-specific AYFX/SFX functionality was removed.
+Этот README фиксирует назначение и базовый интерфейс W100h. Дальнейшая история разработки ведётся в `versions.md`; сам README больше не изменяется.

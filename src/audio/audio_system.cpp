@@ -50,12 +50,19 @@ bool AudioSystem::play_music(std::string_view id) {
     }
 
     music_player_.start(found->second, music_primary_, music_secondary_);
+    music_paused_ = false;
     return true;
 }
 
 void AudioSystem::stop_music() {
     StreamLock lock{*output_};
     music_player_.stop(music_primary_, music_secondary_);
+    music_paused_ = false;
+}
+
+void AudioSystem::set_music_paused(bool paused) {
+    StreamLock lock{*output_};
+    music_paused_ = paused;
 }
 
 void AudioSystem::set_mix_settings(const AudioMixSettings& settings) {
@@ -80,7 +87,7 @@ void AudioSystem::validate_mix_settings(const AudioMixSettings& settings) {
 void AudioSystem::render(std::span<float> output) {
     const std::size_t sample_count = output.size();
     std::span<float> music{music_buffer_.data(), sample_count};
-    if (music_enabled_) {
+    if (music_enabled_ && !music_paused_) {
         music_player_.render(music_primary_, music_secondary_, music);
     } else {
         std::fill(music.begin(), music.end(), 0.0F);

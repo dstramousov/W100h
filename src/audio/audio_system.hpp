@@ -74,6 +74,12 @@ public:
     void stop_music();
 
     /**
+     * @brief Pauses or resumes the current music timeline without restarting it.
+     * @param paused true to freeze playback; false to continue from the same position.
+     */
+    void set_music_paused(bool paused);
+
+    /**
      * @brief Applies new master and music bus settings at runtime.
      *
      * @param settings New audio mix settings.
@@ -111,6 +117,7 @@ private:
     float master_gain_ = 0.8F;
     float music_gain_ = 0.6F;
     bool music_enabled_ = true;
+    bool music_paused_ = false;
     std::array<float, kChunkSamples> music_buffer_{};
     std::unique_ptr<AudioOutput> output_;
 };

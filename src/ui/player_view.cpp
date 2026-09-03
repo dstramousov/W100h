@@ -1,6 +1,7 @@
 #include "ui/player_view.hpp"
 
 #include <array>
+#include <string>
 
 #include "ui/pixel_font.hpp"
 
@@ -40,9 +41,24 @@ void draw_spectrum_mark(SDL_Renderer* renderer) {
     }
 }
 
+[[nodiscard]] std::string clipped_track_name(std::string_view name) {
+    constexpr std::size_t kMaxCharacters = 46;
+    if (name.size() <= kMaxCharacters) {
+        return std::string{name};
+    }
+    std::string result{name.substr(0, kMaxCharacters - 3)};
+    result += "...";
+    return result;
+}
+
 }  // namespace
 
-void draw_player_view(SDL_Renderer* renderer, std::string_view track_name, bool audio_available) {
+void draw_player_view(
+    SDL_Renderer* renderer,
+    std::string_view track_name,
+    std::string_view playback_status,
+    std::size_t library_size,
+    bool audio_available) {
     if (renderer == nullptr) {
         return;
     }
@@ -55,18 +71,21 @@ void draw_player_view(SDL_Renderer* renderer, std::string_view track_name, bool 
     draw_spectrum_mark(renderer);
 
     fill_rect(renderer, 10.0F, 45.0F, 300.0F, 55.0F, kPanel);
-    draw_text(renderer, 16, 53, track_name, kText);
-    draw_text(renderer, 16, 68, "PT3 / AY-3-8910 / 50 HZ", kDim);
-    draw_text(renderer, 16, 83, audio_available ? "AUDIO ONLINE" : "AUDIO UNAVAILABLE",
-              audio_available ? kAccent : kDim);
+    draw_text(renderer, 16, 53, clipped_track_name(track_name), kText);
+    draw_text(renderer, 16, 68, "PT3 AY-3-8910 50 HZ", kDim);
+
+    const std::string library_text = "TRACKS " + std::to_string(library_size);
+    draw_text(renderer, 16, 83, playback_status,
+              playback_status == "PLAYING" ? kAccent : kDim);
+    draw_text(renderer, 224, 83, library_text, audio_available ? kDim : kBorder);
 
     fill_rect(renderer, 10.0F, 108.0F, 300.0F, 35.0F, kPanel);
-    draw_text(renderer, 18, 118, "|<<", kText);
+    draw_text(renderer, 18, 118, "<<", kText);
     draw_text(renderer, 72, 118, ">", kAccent, 2);
-    draw_text(renderer, 120, 118, "||", kText);
-    draw_text(renderer, 173, 118, "[]", kText);
-    draw_text(renderer, 229, 118, ">>|", kText);
-    draw_text(renderer, 16, 146, "BOOTSTRAP BUILD - ESC QUITS", kDim);
+    draw_text(renderer, 120, 118, "II", kText);
+    draw_text(renderer, 173, 118, "STOP", kText);
+    draw_text(renderer, 242, 118, ">>", kText);
+    draw_text(renderer, 16, 146, "SPACE PLAY PAUSE  LEFT RIGHT TRACK  S STOP  ESC QUIT", kDim);
 }
 
 }  // namespace w100h::ui
