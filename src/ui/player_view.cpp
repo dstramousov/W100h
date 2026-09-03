@@ -38,7 +38,7 @@ constexpr SDL_FPoint kVolumeCenter{833.0F, 96.0F};
 constexpr float kVolumeRadius = 51.0F;
 constexpr float kPi = 3.14159265358979323846F;
 constexpr int kReelFrameCount = 12;
-constexpr int kReelFrameSize = 36;
+constexpr int kReelFrameSize = 104;
 
 [[nodiscard]] bool contains(const SDL_FRect& rect, float x, float y) noexcept {
     return x >= rect.x && y >= rect.y && x < rect.x + rect.w && y < rect.y + rect.h;
@@ -128,11 +128,14 @@ void draw_reels(SDL_Renderer* renderer, SDL_Texture* frames, float reel_phase) {
     const SDL_FRect left_source{static_cast<float>(frame_index * kReelFrameSize), 0.0F,
                                static_cast<float>(kReelFrameSize),
                                static_cast<float>(kReelFrameSize)};
-    const SDL_FRect right_source{static_cast<float>(second_frame * kReelFrameSize), 0.0F,
+    const SDL_FRect right_source{static_cast<float>(second_frame * kReelFrameSize),
+                                static_cast<float>(kReelFrameSize),
                                 static_cast<float>(kReelFrameSize),
                                 static_cast<float>(kReelFrameSize)};
-    const SDL_FRect left_dest{260.0F, 205.0F, 36.0F, 36.0F};
-    const SDL_FRect right_dest{508.0F, 205.0F, 36.0F, 36.0F};
+    // The reel strip now contains the photographed outer cassette engagement rings,
+    // not a second synthetic spindle drawn on top of the real one.
+    const SDL_FRect left_dest{226.0F, 168.0F, 104.0F, 104.0F};
+    const SDL_FRect right_dest{474.0F, 168.0F, 104.0F, 104.0F};
     SDL_RenderTexture(renderer, frames, &left_source, &left_dest);
     SDL_RenderTexture(renderer, frames, &right_source, &right_dest);
 }

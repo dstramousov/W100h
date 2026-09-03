@@ -39,3 +39,9 @@
 - Replace the oversized circular reel overlays with compact square-toothed cassette spindle cores that animate only the real engagement teeth over the existing reel artwork.
 - Add live dual-AY front-panel telemetry for channels 1A/1B/1C and 2A/2B/2C, with envelope-aware levels plus small aggregate NOISE/ENV indicators; inactive second-chip meters remain dark for normal single-AY PT3 tracks.
 - Make the volume control visibly interactive with a moving green neon position marker and mouse drag in addition to wheel control, and suppress the upstream PT3 decoder's stray `Number of positions` stdout diagnostics during track setup.
+
+## v0.0.7 -> v0.0.8
+
+- Move cassette motion from the small synthetic inner spindle to the real large outer engagement ring already present in the approved skin, using 12-frame left/right reel animation while leaving the central hub static.
+- Update the cassette label to the approved exact wording `Spring '75` / `Ялта парус........`, rendered in darker, slightly heavier and more relaxed handwriting.
+- Keep the existing live AY meters, transport, volume interaction, PT3/02TS audio path, and fixed README unchanged.
