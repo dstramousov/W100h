@@ -51,6 +51,7 @@ bool AudioSystem::play_music(std::string_view id) {
 
     music_player_.start(found->second, music_primary_, music_secondary_);
     music_paused_ = false;
+    publish_timeline();
     return true;
 }
 
@@ -59,6 +60,7 @@ void AudioSystem::stop_music() {
     music_player_.stop(music_primary_, music_secondary_);
     music_paused_ = false;
     clear_telemetry();
+    publish_timeline();
 }
 
 void AudioSystem::set_music_paused(bool paused) {
@@ -67,6 +69,17 @@ void AudioSystem::set_music_paused(bool paused) {
     if (music_paused_) {
         clear_telemetry();
     }
+}
+
+bool AudioSystem::seek_music_relative(int seconds) {
+    StreamLock lock{*output_};
+    const bool moved =
+        music_player_.seek_relative_seconds(seconds, music_primary_, music_secondary_);
+    if (moved) {
+        publish_timeline();
+        publish_telemetry();
+    }
+    return moved;
 }
 
 void AudioSystem::set_mix_settings(const AudioMixSettings& settings) {
@@ -91,6 +104,26 @@ AyTelemetrySnapshot AudioSystem::telemetry_snapshot() const noexcept {
     return snapshot;
 }
 
+MusicTimelineSnapshot AudioSystem::timeline_snapshot() const noexcept {
+    const std::uint32_t current_tick =
+        timeline_current_tick_.load(std::memory_order_relaxed);
+    const std::uint32_t duration_ticks =
+        timeline_duration_ticks_.load(std::memory_order_relaxed);
+
+    MusicTimelineSnapshot snapshot;
+    snapshot.elapsed_seconds = static_cast<int>(current_tick / kFrameRate);
+    snapshot.duration_seconds = duration_ticks == 0
+                                    ? 0
+                                    : static_cast<int>((duration_ticks + kFrameRate - 1) /
+                                                       kFrameRate);
+    if (duration_ticks > 1) {
+        snapshot.progress = std::clamp(
+            static_cast<float>(current_tick) / static_cast<float>(duration_ticks - 1U),
+            0.0F, 1.0F);
+    }
+    return snapshot;
+}
+
 void AudioSystem::render_callback(void* userdata, std::span<float> output) {
     static_cast<AudioSystem*>(userdata)->render(output);
 }
@@ -108,6 +141,7 @@ void AudioSystem::render(std::span<float> output) {
     if (music_enabled_ && !music_paused_) {
         music_player_.render(music_primary_, music_secondary_, music);
         publish_telemetry();
+        publish_timeline();
     } else {
         std::fill(music.begin(), music.end(), 0.0F);
         clear_telemetry();
@@ -163,6 +197,11 @@ void AudioSystem::clear_telemetry() noexcept {
     meter_chip_count_.store(0, std::memory_order_relaxed);
     meter_noise_active_.store(false, std::memory_order_relaxed);
     meter_envelope_active_.store(false, std::memory_order_relaxed);
+}
+
+void AudioSystem::publish_timeline() noexcept {
+    timeline_current_tick_.store(music_player_.current_tick(), std::memory_order_relaxed);
+    timeline_duration_ticks_.store(music_player_.duration_ticks(), std::memory_order_relaxed);
 }
 
 }  // namespace w100h::audio

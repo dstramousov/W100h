@@ -28,10 +28,13 @@ int main() {
     assert(primary.read_register(8) == 15);
     assert(secondary.read_register(8) == 0);
     assert(primary.read_register(13) == 9);
+    assert(player.current_tick() == 0);
+    assert(player.duration_ticks() == 16);
 
     std::array<float, kSamples> pcm{};
     player.render(primary, secondary, pcm);
     assert(pt3_stub_tick_count(0) == 2);
+    assert(player.current_tick() == 1);
     assert(primary.read_register(13) == 9);
     assert(std::all_of(pcm.begin(), pcm.end(), [](float sample) {
         return std::isfinite(sample) && sample >= -1.0F && sample <= 1.0F;
@@ -39,6 +42,11 @@ int main() {
     assert(std::any_of(pcm.begin(), pcm.end(), [](float sample) {
         return std::abs(sample) > 1.0e-5F;
     }));
+
+    assert(player.seek_relative_seconds(1, primary, secondary));
+    assert(player.current_tick() == 15);
+    assert(player.seek_relative_seconds(-1, primary, secondary));
+    assert(player.current_tick() == 0);
 
     player.stop(primary, secondary);
     assert(!player.active());

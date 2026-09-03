@@ -45,3 +45,9 @@
 - Move cassette motion from the small synthetic inner spindle to the real large outer engagement ring already present in the approved skin, using 12-frame left/right reel animation while leaving the central hub static.
 - Update the cassette label to the approved exact wording `Spring '75` / `Ялта парус........`, rendered in darker, slightly heavier and more relaxed handwriting.
 - Keep the existing live AY meters, transport, volume interaction, PT3/02TS audio path, and fixed README unchanged.
+
+## v0.0.8 -> v0.0.9
+
+- Add a real PT3 transport timeline by reading the pinned decoder's current/loop positions through a narrow bridge, then show current/total time plus a green dotted progress bar across the live display.
+- Reassign Left/Right to seek the active track by -10/+10 seconds, Up/Down to master volume, and Ctrl+Left/Ctrl+Right to previous/next composition while keeping the front-panel PREV/NEXT buttons as playlist controls.
+- Implement seek reconstruction with AY synthesis advancement so tracker/envelope state remains coherent after jumps, preserve first-pass duration across Stop, and keep README.md unchanged.

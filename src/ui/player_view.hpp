@@ -37,6 +37,8 @@ struct PlayerViewModel {
     int master_volume = 80;
     float reel_phase = 0.0F;
     int elapsed_seconds = 0;
+    int duration_seconds = 0;
+    float progress = 0.0F;
     std::array<std::uint8_t, 6> ay_channel_levels{};
     std::uint8_t ay_chip_count = 0;
     bool ay_noise_active = false;

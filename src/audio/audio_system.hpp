@@ -2,6 +2,7 @@
 
 #include <array>
 #include <atomic>
+#include <cstdint>
 #include <filesystem>
 #include <map>
 #include <memory>
@@ -32,6 +33,13 @@ struct AyTelemetrySnapshot {
     std::uint8_t chip_count = 0;
     bool noise_active = false;
     bool envelope_active = false;
+};
+
+/** @brief Lock-free transport position for the current PT3 first-pass timeline. */
+struct MusicTimelineSnapshot {
+    int elapsed_seconds = 0;
+    int duration_seconds = 0;
+    float progress = 0.0F;
 };
 
 /**
@@ -89,6 +97,13 @@ public:
     void set_music_paused(bool paused);
 
     /**
+     * @brief Seeks the active track by a signed number of seconds.
+     * @param seconds Signed relative seek distance.
+     * @return true when the transport position changed.
+     */
+    [[nodiscard]] bool seek_music_relative(int seconds);
+
+    /**
      * @brief Applies new master and music bus settings at runtime.
      *
      * @param settings New audio mix settings.
@@ -104,6 +119,9 @@ public:
      * callers never lock or touch realtime decoder state.
      */
     [[nodiscard]] AyTelemetrySnapshot telemetry_snapshot() const noexcept;
+
+    /** @brief Returns the latest lock-free PT3 transport timeline snapshot. */
+    [[nodiscard]] MusicTimelineSnapshot timeline_snapshot() const noexcept;
 
 private:
     class StreamLock final {
@@ -122,12 +140,14 @@ private:
     static constexpr int kChannelCount = 2;
     static constexpr int kChunkFrames = 1024;
     static constexpr int kChunkSamples = kChunkFrames * kChannelCount;
+    static constexpr int kFrameRate = 50;
 
     static void render_callback(void* userdata, std::span<float> output);
     static void validate_mix_settings(const AudioMixSettings& settings);
     void render(std::span<float> output);
     void publish_telemetry() noexcept;
     void clear_telemetry() noexcept;
+    void publish_timeline() noexcept;
 
     AyChip music_primary_{kSampleRate};
     AyChip music_secondary_{kSampleRate};
@@ -142,6 +162,8 @@ private:
     std::atomic<std::uint8_t> meter_chip_count_{0};
     std::atomic<bool> meter_noise_active_{false};
     std::atomic<bool> meter_envelope_active_{false};
+    std::atomic<std::uint32_t> timeline_current_tick_{0};
+    std::atomic<std::uint32_t> timeline_duration_ticks_{0};
     std::unique_ptr<AudioOutput> output_;
 };
 

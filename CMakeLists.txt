@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.28)
 
 project(
     W100h
-    VERSION 0.0.8
+    VERSION 0.0.9
     DESCRIPTION "A small retro-styled AY/PT3 music player"
     LANGUAGES C CXX
 )
@@ -54,9 +54,12 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(pt3player)
 
-add_library(w100h_pt3player STATIC "${pt3player_SOURCE_DIR}/pt3player.c")
+add_library(w100h_pt3player STATIC src/audio/pt3player_bridge.c)
 target_compile_features(w100h_pt3player PRIVATE c_std_17)
-target_include_directories(w100h_pt3player PUBLIC "${pt3player_SOURCE_DIR}")
+target_include_directories(w100h_pt3player
+    PUBLIC "${pt3player_SOURCE_DIR}"
+    PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src/audio"
+)
 
 add_executable(w100h)
 

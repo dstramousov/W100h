@@ -175,7 +175,6 @@ int Application::run(int argc, char* argv[]) {
     std::optional<std::filesystem::path> last_failed_track;
     std::string last_play_error;
     float reel_phase = 0.0F;
-    double elapsed_seconds = 0.0;
     bool volume_dragging = false;
     float volume_drag_accumulator = 0.0F;
 
@@ -190,7 +189,6 @@ int Application::run(int argc, char* argv[]) {
                 return;
             }
             playback_state = PlaybackState::playing;
-            elapsed_seconds = 0.0;
             last_failed_track.reset();
             last_play_error.clear();
         } catch (const std::exception& error) {
@@ -212,7 +210,6 @@ int Application::run(int argc, char* argv[]) {
             audio_system->stop_music();
         }
         playback_state = PlaybackState::stopped;
-        elapsed_seconds = 0.0;
     };
 
     const auto toggle_play_pause = [&]() {
@@ -271,6 +268,15 @@ int Application::run(int argc, char* argv[]) {
         }
     };
 
+    const auto seek_current = [&](int seconds) {
+        if (!audio_system ||
+            (playback_state != PlaybackState::playing &&
+             playback_state != PlaybackState::paused)) {
+            return;
+        }
+        (void)audio_system->seek_music_relative(seconds);
+    };
+
     if (startup.autoplay) {
         play_current();
     }
@@ -291,6 +297,7 @@ int Application::run(int argc, char* argv[]) {
             }
 
             if (event.type == SDL_EVENT_KEY_DOWN && !event.key.repeat) {
+                const bool ctrl = (event.key.mod & SDL_KMOD_CTRL) != 0;
                 switch (event.key.key) {
                     case SDLK_ESCAPE:
                         running = false;
@@ -303,10 +310,24 @@ int Application::run(int argc, char* argv[]) {
                         play_current();
                         break;
                     case SDLK_LEFT:
-                        move_track(-1);
+                        if (ctrl) {
+                            move_track(-1);
+                        } else {
+                            seek_current(-10);
+                        }
                         break;
                     case SDLK_RIGHT:
-                        move_track(1);
+                        if (ctrl) {
+                            move_track(1);
+                        } else {
+                            seek_current(10);
+                        }
+                        break;
+                    case SDLK_UP:
+                        change_master_volume(5);
+                        break;
+                    case SDLK_DOWN:
+                        change_master_volume(-5);
                         break;
                     case SDLK_S:
                         stop_playback();
@@ -367,7 +388,6 @@ int Application::run(int argc, char* argv[]) {
             reel_phase = std::fmod(reel_phase + static_cast<float>(delta_seconds) *
                                                     kReelRadiansPerSecond,
                                    kTwoPi);
-            elapsed_seconds += delta_seconds;
         }
 
         const bool audio_available = audio_system != nullptr;
@@ -378,6 +398,8 @@ int Application::run(int argc, char* argv[]) {
 
         const audio::AyTelemetrySnapshot telemetry =
             audio_system ? audio_system->telemetry_snapshot() : audio::AyTelemetrySnapshot{};
+        const audio::MusicTimelineSnapshot timeline =
+            audio_system ? audio_system->timeline_snapshot() : audio::MusicTimelineSnapshot{};
 
         const ui::PlayerViewModel view_model{
             .track_name = track_name,
@@ -387,7 +409,9 @@ int Application::run(int argc, char* argv[]) {
             .audio_available = audio_available,
             .master_volume = mix_settings.master_volume,
             .reel_phase = reel_phase,
-            .elapsed_seconds = static_cast<int>(elapsed_seconds),
+            .elapsed_seconds = timeline.elapsed_seconds,
+            .duration_seconds = timeline.duration_seconds,
+            .progress = timeline.progress,
             .ay_channel_levels = telemetry.channel_levels,
             .ay_chip_count = telemetry.chip_count,
             .ay_noise_active = telemetry.noise_active,

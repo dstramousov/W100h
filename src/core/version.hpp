@@ -5,6 +5,6 @@
 namespace w100h::core {
 
 /** @brief Current W100h project version. */
-inline constexpr std::string_view kVersion = "0.0.8";
+inline constexpr std::string_view kVersion = "0.0.9";
 
 }  // namespace w100h::core

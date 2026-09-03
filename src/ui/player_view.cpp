@@ -29,6 +29,8 @@ constexpr SDL_Color kMeterOrange{238, 145, 47, 255};
 constexpr SDL_Color kMeterRed{228, 67, 49, 255};
 constexpr SDL_Color kMeterOff{20, 31, 27, 255};
 constexpr SDL_Color kMeterFrame{50, 65, 67, 255};
+constexpr SDL_Color kProgressOn{76, 255, 108, 255};
+constexpr SDL_Color kProgressOff{15, 43, 32, 255};
 
 constexpr SDL_FRect kPreviousButton{86.0F, 400.0F, 168.0F, 46.0F};
 constexpr SDL_FRect kPlayPauseButton{269.0F, 400.0F, 173.0F, 46.0F};
@@ -214,6 +216,25 @@ void draw_meters(SDL_Renderer* renderer, const PlayerViewModel& model) {
               model.ay_envelope_active ? kMeterGreen : kMeterOff);
 }
 
+void draw_progress_bar(SDL_Renderer* renderer, const PlayerViewModel& model) {
+    constexpr int kDots = 76;
+    constexpr float kStartX = 106.0F;
+    constexpr float kY = 389.0F;
+    constexpr float kDotWidth = 5.0F;
+    constexpr float kDotHeight = 3.0F;
+    constexpr float kStep = 8.0F;
+
+    const float progress = model.duration_seconds > 0 ? std::clamp(model.progress, 0.0F, 1.0F)
+                                                       : 0.0F;
+    const int active_dots = static_cast<int>(std::round(progress * static_cast<float>(kDots)));
+    for (int dot = 0; dot < kDots; ++dot) {
+        const SDL_Color color = dot < active_dots ? kProgressOn : kProgressOff;
+        fill_rect(renderer,
+                  SDL_FRect{kStartX + static_cast<float>(dot) * kStep, kY, kDotWidth, kDotHeight},
+                  color);
+    }
+}
+
 void draw_display(SDL_Renderer* renderer, const PlayerViewModel& model) {
     const SDL_Color state_color = model.playback_state == PlaybackVisualState::load_error
                                       ? kError
@@ -232,7 +253,11 @@ void draw_display(SDL_Renderer* renderer, const PlayerViewModel& model) {
     }
     draw_text(renderer, 126, 375, track_text, kDisplay, 1);
     draw_text(renderer, 393, 375, model.playback_status, state_color, 1);
-    draw_text(renderer, 654, 375, format_elapsed(model.elapsed_seconds), kDisplay, 1);
+
+    std::string time_text = format_elapsed(model.elapsed_seconds) + " / ";
+    time_text += model.duration_seconds > 0 ? format_elapsed(model.duration_seconds) : "--:--";
+    draw_text(renderer, 625, 375, time_text, kDisplay, 1);
+    draw_progress_bar(renderer, model);
 }
 
 void draw_keycap_label(
@@ -255,11 +280,11 @@ void draw_transport(SDL_Renderer* renderer, const PlayerViewModel& model) {
     draw_centered_text(renderer, play_symbol_area, 414, ">", play_color, 3);
     draw_centered_text(renderer, pause_symbol_area, 414, "II", pause_color, 3);
 
-    draw_keycap_label(renderer, SDL_FRect{143.0F, 458.0F, 57.0F, 20.0F}, "[LEFT]");
-    draw_keycap_label(renderer, SDL_FRect{326.0F, 458.0F, 60.0F, 20.0F}, "[SPACE]");
-    draw_keycap_label(renderer, SDL_FRect{521.0F, 458.0F, 31.0F, 20.0F}, "[S]");
-    draw_keycap_label(renderer, SDL_FRect{691.0F, 458.0F, 59.0F, 20.0F}, "[RIGHT]");
-    draw_text(renderer, 18, 468, "ESC QUIT", kDim, 1);
+    draw_keycap_label(renderer, SDL_FRect{115.0F, 450.0F, 112.0F, 20.0F}, "[CTRL+LEFT]");
+    draw_keycap_label(renderer, SDL_FRect{326.0F, 450.0F, 60.0F, 20.0F}, "[SPACE]");
+    draw_keycap_label(renderer, SDL_FRect{521.0F, 450.0F, 31.0F, 20.0F}, "[S]");
+    draw_keycap_label(renderer, SDL_FRect{663.0F, 450.0F, 115.0F, 20.0F}, "[CTRL+RIGHT]");
+    draw_text(renderer, 18, 469, "ESC QUIT   LEFT/RIGHT SEEK 10S   UP/DOWN VOL", kDim, 1);
 }
 
 }  // namespace
