@@ -91,7 +91,6 @@ private:
     };
 
     std::unique_ptr<SDL_Texture, TextureDeleter> skin_;
-    std::unique_ptr<SDL_Texture, TextureDeleter> reel_frames_;
 };
 
 }  // namespace w100h::ui

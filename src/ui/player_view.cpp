@@ -39,8 +39,6 @@ constexpr SDL_FRect kNextButton{635.0F, 400.0F, 168.0F, 46.0F};
 constexpr SDL_FPoint kVolumeCenter{833.0F, 96.0F};
 constexpr float kVolumeRadius = 51.0F;
 constexpr float kPi = 3.14159265358979323846F;
-constexpr int kReelFrameCount = 24;
-constexpr int kReelFrameSize = 104;
 
 [[nodiscard]] bool contains(const SDL_FRect& rect, float x, float y) noexcept {
     return x >= rect.x && y >= rect.y && x < rect.x + rect.w && y < rect.y + rect.h;
@@ -117,29 +115,74 @@ void draw_centered_text(
     return buffer;
 }
 
-void draw_reels(SDL_Renderer* renderer, SDL_Texture* frames, float reel_phase) {
-    if (frames == nullptr) {
-        return;
-    }
-    const float normalized = std::fmod(std::max(reel_phase, 0.0F), 2.0F * kPi) / (2.0F * kPi);
-    const int frame_index = std::clamp(
-        static_cast<int>(normalized * static_cast<float>(kReelFrameCount)), 0,
-        kReelFrameCount - 1);
-    const int second_frame = (frame_index + 2) % kReelFrameCount;
+void draw_tooth_quad(
+    SDL_Renderer* renderer,
+    const SDL_FPoint& center,
+    float angle,
+    SDL_FColor inner_color,
+    SDL_FColor outer_color) {
+    constexpr float kInnerRadius = 24.0F;
+    constexpr float kOuterRadius = 35.0F;
+    constexpr float kInnerHalfWidth = 5.0F;
+    constexpr float kOuterHalfWidth = 6.5F;
 
-    const SDL_FRect left_source{static_cast<float>(frame_index * kReelFrameSize), 0.0F,
-                               static_cast<float>(kReelFrameSize),
-                               static_cast<float>(kReelFrameSize)};
-    const SDL_FRect right_source{static_cast<float>(second_frame * kReelFrameSize),
-                                static_cast<float>(kReelFrameSize),
-                                static_cast<float>(kReelFrameSize),
-                                static_cast<float>(kReelFrameSize)};
-    // The reel strip now contains the photographed outer cassette engagement rings,
-    // not a second synthetic spindle drawn on top of the real one.
-    const SDL_FRect left_dest{226.0F, 168.0F, 104.0F, 104.0F};
-    const SDL_FRect right_dest{474.0F, 168.0F, 104.0F, 104.0F};
-    SDL_RenderTexture(renderer, frames, &left_source, &left_dest);
-    SDL_RenderTexture(renderer, frames, &right_source, &right_dest);
+    const float dx = std::cos(angle);
+    const float dy = std::sin(angle);
+    const float tx = -dy;
+    const float ty = dx;
+
+    const SDL_FPoint inner_center{
+        center.x + dx * kInnerRadius,
+        center.y + dy * kInnerRadius,
+    };
+    const SDL_FPoint outer_center{
+        center.x + dx * kOuterRadius,
+        center.y + dy * kOuterRadius,
+    };
+
+    SDL_Vertex vertices[4]{};
+    vertices[0].position = SDL_FPoint{inner_center.x - tx * kInnerHalfWidth,
+                                      inner_center.y - ty * kInnerHalfWidth};
+    vertices[1].position = SDL_FPoint{inner_center.x + tx * kInnerHalfWidth,
+                                      inner_center.y + ty * kInnerHalfWidth};
+    vertices[2].position = SDL_FPoint{outer_center.x + tx * kOuterHalfWidth,
+                                      outer_center.y + ty * kOuterHalfWidth};
+    vertices[3].position = SDL_FPoint{outer_center.x - tx * kOuterHalfWidth,
+                                      outer_center.y - ty * kOuterHalfWidth};
+    vertices[0].color = inner_color;
+    vertices[1].color = inner_color;
+    vertices[2].color = outer_color;
+    vertices[3].color = outer_color;
+
+    constexpr int indices[6]{0, 1, 2, 0, 2, 3};
+    SDL_RenderGeometry(renderer, nullptr, vertices, 4, indices, 6);
+}
+
+void draw_reel_teeth(SDL_Renderer* renderer, const SDL_FPoint& center, float reel_phase) {
+    constexpr int kToothCount = 6;
+    constexpr float kStep = 2.0F * kPi / static_cast<float>(kToothCount);
+    constexpr SDL_FColor kToothInner{0.56F, 0.53F, 0.47F, 1.0F};
+    constexpr SDL_FColor kToothOuter{0.82F, 0.78F, 0.69F, 1.0F};
+    constexpr SDL_FColor kShadow{0.13F, 0.13F, 0.11F, 0.67F};
+
+    // One continuous mathematical phase drives every tooth. The hub center and
+    // radii never change, so the engagement ring cannot orbit or wobble.
+    const float phase = std::fmod(reel_phase, kStep);
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    for (int tooth = 0; tooth < kToothCount; ++tooth) {
+        const float angle = phase - kPi / 2.0F + static_cast<float>(tooth) * kStep;
+        draw_tooth_quad(renderer, SDL_FPoint{center.x + 1.0F, center.y + 1.0F}, angle,
+                        kShadow, kShadow);
+        draw_tooth_quad(renderer, center, angle, kToothInner, kToothOuter);
+    }
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+}
+
+void draw_reels(SDL_Renderer* renderer, float reel_phase) {
+    constexpr SDL_FPoint kLeftCenter{278.0F, 220.0F};
+    constexpr SDL_FPoint kRightCenter{526.0F, 220.0F};
+    draw_reel_teeth(renderer, kLeftCenter, reel_phase);
+    draw_reel_teeth(renderer, kRightCenter, reel_phase);
 }
 
 void draw_volume_pointer(SDL_Renderer* renderer, int volume) {
@@ -307,7 +350,6 @@ PlayerView::PlayerView(SDL_Renderer* renderer) {
         throw std::runtime_error{"PlayerView requires a valid SDL renderer"};
     }
     skin_.reset(load_required_bmp(renderer, "player_skin.bmp"));
-    reel_frames_.reset(load_required_bmp(renderer, "reel_frames.bmp"));
 }
 
 PlayerView::~PlayerView() = default;
@@ -319,7 +361,7 @@ void PlayerView::draw(SDL_Renderer* renderer, const PlayerViewModel& model) cons
 
     const SDL_FRect destination{0.0F, 0.0F, 960.0F, 480.0F};
     SDL_RenderTexture(renderer, skin_.get(), nullptr, &destination);
-    draw_reels(renderer, reel_frames_.get(), model.reel_phase);
+    draw_reels(renderer, model.reel_phase);
     draw_volume_pointer(renderer, model.master_volume);
     draw_meters(renderer, model);
     draw_display(renderer, model);

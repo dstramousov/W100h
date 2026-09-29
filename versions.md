@@ -63,3 +63,21 @@
 - Rebuild cassette reel animation around a fixed pivot with 24 frames and rotate only the photographed outer engagement annulus, eliminating the visible orbital wobble while keeping the hub and cassette body static.
 - Restore a subtle rounded lower chassis edge, lift the keyboard legends away from the window boundary, and remove the clipped footer text that made the bottom of the player look cut off.
 - Split NOISE and ENVELOPE telemetry per AY chip and center compact N/E lamps under each chip's middle B channel so single-AY and TurboSound activity is displayed symmetrically and truthfully; keep README.md unchanged.
+
+## v0.0.11 -> v0.0.12
+
+- Rebuild the cassette reel strip so every animation frame uses the exact same fixed center and diameter, eliminating residual orbital wobble.
+- Animate only the six pale cassette engagement teeth around each hub; keep the outer reel ring, central dark hub, cassette body, and surrounding artwork completely static.
+- Preserve the existing transport, live AY meters, volume control, Linux integration, and fixed README unchanged.
+
+## v0.0.12 -> v0.0.13
+
+- Rebuild both reel strips from the approved cassette skin around one exact fixed 104x104 pivot, rotating the pale outer plastic engagement annulus without moving the hub center.
+- Make left and right reel animation use the same frame order and phase so both cassette hubs rotate together in the same physical direction during playback.
+- Keep the inner dark spindle, reel diameter, transport, meters, volume, Linux integration, and fixed README unchanged.
+
+## v0.0.13 -> v0.0.14
+
+- Replace the pre-rendered reel animation strip with mathematically centered six-tooth cassette engagement hubs, so both reels rotate continuously around immutable pivots without per-frame crop or center drift.
+- Keep the cassette body, outer reel rings, and dark central spindles static; animate only the pale plastic engagement teeth in the same direction and phase on both reels.
+- Remove the obsolete reel-frame asset and preserve the existing transport, meters, volume, Linux integration, and fixed README unchanged.
