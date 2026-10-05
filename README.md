@@ -1,7 +1,5 @@
 # W100h
 
-
-
 **W100h** — маленький музыкальный плеер для старой компьютерной музыки с интерфейсом в духе ZX Spectrum и ранних домашних компьютеров. Название читается как `W100h`: `100h` — это hexadecimal `256`.
 
 <img width="1727" height="955" alt="Screenshot from 2026-09-03 20-12-52" src="https://github.com/user-attachments/assets/2e6cae82-a4fd-4220-8df2-69ff103c3608" />
